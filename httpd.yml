@@ -1,0 +1,57 @@
+- hosts: 192.168.0.126
+  tasks:
+  - name : Mounting dvd
+    mount : 
+      src : "/dev/cdrom"
+      path : "/dvd"
+      state : mounted 
+      fstype : "iso9660"
+
+          
+  - name : "Setting up yum repo"
+    yum_repository :
+      name : yum1
+      description : "Yum repo 1"
+      baseurl : "/dvd/AppStream"
+      gpgcheck : 0
+
+  - name : "Setting yum repo "
+    yum_repository :
+      name : yum2
+      description : "Yum repo 2"
+      baseurl : "/dvd/BaseOS"
+      gpgcheck: 0   
+
+  - name : "Installing net-tools for cli "
+    yum : 
+      name : net-tools
+      state : present
+        
+  - name : "Installing httpd package"
+    yum : 
+     name : httpd
+     state : present 
+
+  - name : "Copying wepages to server"
+    tags : rootdoc
+    copy :      
+      src : index.html
+      dest : /var/www/html/
+    register : rootdoc
+    
+  - debug : 
+      msg : "{{ rootdoc }}"   
+
+
+  - name : "Starting httpd server"
+    service : 
+      name : httpd
+      state : started
+      enabled : yes    
+    ignore_errors: yes 
+
+  - name : Service status
+    service :
+      name : httpd
+      state : restarted 
+    when : rootdoc.changed == true  
